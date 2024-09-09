@@ -2374,6 +2374,7 @@ out:
     return;
 }
 
+// 根据Final Graph构造的volume图,来选择执行下一个xlator的入口函数
 void
 call_resume(call_stub_t *stub)
 {

@@ -1027,6 +1027,9 @@ glfs_mgmt_init(struct glfs *fs)
     if (ret)
         goto out;
 
+    //[maxing COMMENT]: 创建rpc客户端，基本上所有的cli rpc客户端都是一样的逻辑，
+    // 1. socket.so -> connect
+    // 2. request glusterd 查询  volume 信息
     rpc = rpc_clnt_new(options, THIS, THIS->name, 8);
     if (!rpc) {
         ret = -1;
@@ -1035,6 +1038,8 @@ glfs_mgmt_init(struct glfs *fs)
         goto out;
     }
 
+    //[maxing COMMENT]:
+    // 注册回调函数，然后，socket.so::event_dispatch_handler会一层一层的传送到这里
     ret = rpc_clnt_register_notify(rpc, mgmt_rpc_notify, THIS);
     if (ret) {
         gf_smsg(THIS->name, GF_LOG_WARNING, 0, API_MSG_REG_NOTIFY_FUNC_FAILED,
@@ -1055,6 +1060,7 @@ glfs_mgmt_init(struct glfs *fs)
        the notify function uses this variable */
     ctx->mgmt = rpc;
 
+    //[maxing COMMENT]: 开始connect tcp glsterd
     ret = rpc_clnt_start(rpc);
 out:
     if (options)

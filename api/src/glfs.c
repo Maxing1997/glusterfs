@@ -239,6 +239,7 @@ glfs_volumes_init(struct glfs *fs)
     }
 
     if (cmd_args->volfile_server) {
+        //[maxing COMMENT]: 去glusterd获取卷信息
         ret = glfs_mgmt_init(fs);
         goto out;
     }

@@ -2753,6 +2753,8 @@ glusterfs_rebalance_event_notify(dict_t *dict)
     return ret;
 }
 
+//[maxing COMMENT]:
+// 和glusterd的tcp连接成功后，会在单独的event线程里通过epoll_wait拿到事件后回调
 static int
 mgmt_rpc_notify(struct rpc_clnt *rpc, void *mydata, rpc_clnt_event_t event,
                 void *data)
@@ -2773,6 +2775,7 @@ mgmt_rpc_notify(struct rpc_clnt *rpc, void *mydata, rpc_clnt_event_t event,
     ctx = this->ctx;
 
     switch (event) {
+            // 断开连接
         case RPC_CLNT_DISCONNECT:
             if (rpc_trans->connect_failed) {
                 GF_LOG_OCCASIONALLY(log_ctr1, "glusterfsd-mgmt", GF_LOG_ERROR,
@@ -2850,7 +2853,10 @@ mgmt_rpc_notify(struct rpc_clnt *rpc, void *mydata, rpc_clnt_event_t event,
                    "connecting to next volfile server %s",
                    server->volfile_server);
             break;
+            // 连接成功了
         case RPC_CLNT_CONNECT:
+            // 向glusterd 发起rpc请求去 查 volfile
+            // 信息，在以前的老版本都是自己本地配volfile文件的现在的版本都是统一向glusterd去拿
             ret = glusterfs_volfile_fetch(ctx);
             if (ret) {
                 emval = ret;

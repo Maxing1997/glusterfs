@@ -2187,6 +2187,7 @@ syncop_writev_cbk(call_frame_t *frame, void *cookie, xlator_t *this, int op_ret,
     return 0;
 }
 
+// 开始将请求通过xlator这颗树进行传递
 int
 syncop_writev(xlator_t *subvol, fd_t *fd, const struct iovec *vector,
               int32_t count, off_t offset, struct iobref *iobref,
@@ -2197,6 +2198,11 @@ syncop_writev(xlator_t *subvol, fd_t *fd, const struct iovec *vector,
         0,
     };
 
+    // 开始写入数据
+    // subvol root(meta-autoload) -> vol2 -> .... vol2client
+    // args参数
+    // syncop_writev_cbk 回调参数
+    // 其实就是执行 subvol->fops->writev()函数
     SYNCOP(subvol, (&args), syncop_writev_cbk, subvol->fops->writev, fd,
            (struct iovec *)vector, count, offset, flags, iobref, xdata_in);
 

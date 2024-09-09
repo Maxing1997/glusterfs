@@ -79,6 +79,8 @@ iot_get_ctx(xlator_t *this, client_t *client)
     return ctx;
 }
 
+// 从每个优先级链表中取出一个io
+// 请求,然后返回这个请求，同时更新优先级队列的ac_iot_count
 static call_stub_t *
 __iot_dequeue(iot_conf_t *conf, int *pri)
 {
@@ -153,6 +155,7 @@ __iot_enqueue(iot_conf_t *conf, call_stub_t *stub, int pri)
     fop_data->queue_sizes++;
 }
 
+// IO 的实现工作函数
 static void *
 iot_worker(void *data)
 {
@@ -175,12 +178,14 @@ iot_worker(void *data)
                 conf->fops_data[pri].ac_iot_count--;
                 pri = -1;
             }
+            // 如果当前io_thread的xlator的总的请求为0，则退出线程
             while (conf->queue_size == 0) {
                 if (conf->down) {
                     bye = _gf_true; /*Avoid sleep*/
                     break;
                 }
 
+                // 如果线程空闲时间超过一定的上线线程退出
                 clock_gettime(CLOCK_REALTIME_COARSE, &sleep_till);
                 sleep_till.tv_sec += conf->idle_time;
 
@@ -209,7 +214,9 @@ iot_worker(void *data)
                 }
             }
 
+            // 如果线程处于没有退出的状态
             if (!bye)
+                // 取出一个IO任务，更新每个优先级对应的请求数和总请求数
                 stub = __iot_dequeue(conf, &pri);
         }
         pthread_mutex_unlock(&conf->mutex);
@@ -220,6 +227,7 @@ iot_worker(void *data)
                        stub);
                 call_stub_destroy(stub);
             } else {
+                // 线程内根据xlator graph执行下一个xlator的相关操作
                 call_resume(stub);
             }
             GF_ATOMIC_DEC(conf->stub_cnt);

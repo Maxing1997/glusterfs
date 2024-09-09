@@ -1819,6 +1819,7 @@ glfs_pwritev_common(struct glfs_fd *glfd, const struct iovec *iovec, int iovcnt,
         goto out;
     }
 
+    // 这里比较重要，是一个分支，用于解析这个文件是否存在，并初始化一些环境
     fd = glfs_resolve_fd(glfd->fs, subvol, glfd);
     if (!fd) {
         ret = -1;
@@ -1826,6 +1827,7 @@ glfs_pwritev_common(struct glfs_fd *glfd, const struct iovec *iovec, int iovcnt,
         goto out;
     }
 
+    // 准备数据
     ret = iobuf_copy(subvol->ctx->iobuf_pool, iovec, iovcnt, &iobref, &iobuf,
                      &iov);
     if (ret)
@@ -1835,6 +1837,7 @@ glfs_pwritev_common(struct glfs_fd *glfd, const struct iovec *iovec, int iovcnt,
     if (ret)
         gf_msg_debug("gfapi", 0, "Getting leaseid from thread failed");
 
+    // 开始准备通过xlator树传递操作
     ret = syncop_writev(subvol, fd, &iov, 1, offset, iobref, flags, &preiatt,
                         &postiatt, fop_attr, NULL);
     DECODE_SYNCOP_ERR(ret);
@@ -2032,6 +2035,7 @@ pub_glfs_pwritev(struct glfs_fd *glfd, const struct iovec *iovec, int iovcnt,
     return glfs_pwritev_common(glfd, iovec, iovcnt, offset, flags, NULL, NULL);
 }
 
+// sdk入口
 GFAPI_SYMVER_PUBLIC_DEFAULT(glfs_write, 3.4.0)
 ssize_t
 pub_glfs_write(struct glfs_fd *glfd, const void *buf, size_t count, int flags)
